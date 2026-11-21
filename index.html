@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Piano</title>
+<style>
+body{font-family:Arial;background:#18181b;color:white;padding:25px;text-align:center}
+main{max-width:750px;margin:40px auto;background:#27272a;padding:25px;border-radius:16px}
+#piano{display:flex;gap:5px;margin:30px 0}
+.key{flex:1;min-width:0;height:200px;background:white;color:#18181b;border:0;border-radius:0 0 10px 10px;cursor:pointer;font-size:18px;display:flex;align-items:flex-end;justify-content:center;padding:15px 0}
+.key:active{background:#a5b4fc}
+</style>
+</head>
+<body>
+<main>
+<h1>Digital Piano</h1>
+<p>Explore musical notes using your browser.</p>
+<div id="piano"></div>
+<p>Keyboard: A S D F G H J K</p>
+<h2 id="current">Play a note</h2>
+</main>
+<script>
+const notes=[
+ ["C","a",261.63],["D","s",293.66],
+ ["E","d",329.63],["F","f",349.23],
+ ["G","g",392.00],["A","h",440.00],
+ ["B","j",493.88],["C5","k",523.25]
+];
+let audio;
+async function play(note){
+ audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+ await audio.resume();
+ const oscillator=audio.createOscillator();
+ const gain=audio.createGain();
+ oscillator.type="sine";
+ oscillator.frequency.value=note[2];
+ gain.gain.setValueAtTime(0.15,audio.currentTime);
+ gain.gain.exponentialRampToValueAtTime(0.001,audio.currentTime+0.6);
+ oscillator.connect(gain);
+ gain.connect(audio.destination);
+ oscillator.start();
+ oscillator.stop(audio.currentTime+0.6);
+ document.getElementById("current").textContent="Note: "+note[0];
+}
+notes.forEach(note=>{
+ const button=document.createElement("button");
+ button.className="key";
+ button.textContent=note[0];
+ button.setAttribute("aria-label","Play "+note[0]);
+ button.onclick=()=>play(note);
+ document.getElementById("piano").appendChild(button);
+});
+document.addEventListener("keydown",event=>{
+ if(event.repeat)return;
+ const note=notes.find(n=>n[1]===event.key.toLowerCase());
+ if(note)play(note);
+});
+</script>
+</body>
+</html>
