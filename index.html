@@ -2,58 +2,55 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Digital Piano</title>
 <style>
-body{font-family:Arial;background:#18181b;color:white;padding:25px;text-align:center}
-main{max-width:750px;margin:40px auto;background:#27272a;padding:25px;border-radius:16px}
-#piano{display:flex;gap:5px;margin:30px 0}
-.key{flex:1;min-width:0;height:200px;background:white;color:#18181b;border:0;border-radius:0 0 10px 10px;cursor:pointer;font-size:18px;display:flex;align-items:flex-end;justify-content:center;padding:15px 0}
-.key:active{background:#a5b4fc}
+body{font-family:Arial;background:#f1f5f9;text-align:center;padding:25px}
+main{max-width:650px;margin:auto;background:white;padding:25px;border-radius:15px}
+#keys{display:flex;justify-content:center;margin:30px 0}
+.key{height:170px;width:65px;background:white;border:2px solid #334155;border-radius:0 0 8px 8px;font-weight:bold;cursor:pointer}
+.key:active{background:#bfdbfe}
 </style>
 </head>
 <body>
 <main>
 <h1>Digital Piano</h1>
-<p>Explore musical notes using your browser.</p>
-<div id="piano"></div>
-<p>Keyboard: A S D F G H J K</p>
-<h2 id="current">Play a note</h2>
+<p>Click a key or use keyboard keys A, S, D, F, G, H, J.</p>
+<div id="keys">
+<button class="key" data-note="261.63">A</button>
+<button class="key" data-note="293.66">S</button>
+<button class="key" data-note="329.63">D</button>
+<button class="key" data-note="349.23">F</button>
+<button class="key" data-note="392.00">G</button>
+<button class="key" data-note="440.00">H</button>
+<button class="key" data-note="493.88">J</button>
+</div>
+<p id="status">Ready to play.</p>
 </main>
 <script>
-const notes=[
- ["C","a",261.63],["D","s",293.66],
- ["E","d",329.63],["F","f",349.23],
- ["G","g",392.00],["A","h",440.00],
- ["B","j",493.88],["C5","k",523.25]
-];
 let audio;
-async function play(note){
+function play(freq){
  audio=audio||new (window.AudioContext||window.webkitAudioContext)();
- await audio.resume();
+ if(audio.state==="suspended")audio.resume();
  const oscillator=audio.createOscillator();
  const gain=audio.createGain();
  oscillator.type="sine";
- oscillator.frequency.value=note[2];
- gain.gain.setValueAtTime(0.15,audio.currentTime);
- gain.gain.exponentialRampToValueAtTime(0.001,audio.currentTime+0.6);
+ oscillator.frequency.value=freq;
  oscillator.connect(gain);
  gain.connect(audio.destination);
+ gain.gain.setValueAtTime(0.3,audio.currentTime);
+ gain.gain.exponentialRampToValueAtTime(0.001,audio.currentTime+0.5);
  oscillator.start();
- oscillator.stop(audio.currentTime+0.6);
- document.getElementById("current").textContent="Note: "+note[0];
+ oscillator.stop(audio.currentTime+0.5);
+ document.getElementById("status").textContent="Playing "+freq+" Hz";
 }
-notes.forEach(note=>{
- const button=document.createElement("button");
- button.className="key";
- button.textContent=note[0];
- button.setAttribute("aria-label","Play "+note[0]);
- button.onclick=()=>play(note);
- document.getElementById("piano").appendChild(button);
+document.querySelectorAll(".key").forEach(key=>{
+ key.addEventListener("click",()=>play(Number(key.dataset.note)));
 });
-document.addEventListener("keydown",event=>{
- if(event.repeat)return;
- const note=notes.find(n=>n[1]===event.key.toLowerCase());
+const map={a:261.63,s:293.66,d:329.63,f:349.23,g:392,h:440,j:493.88};
+document.addEventListener("keydown",e=>{
+ if(e.repeat||e.target.matches("input,textarea"))return;
+ const note=map[e.key.toLowerCase()];
  if(note)play(note);
 });
 </script>
